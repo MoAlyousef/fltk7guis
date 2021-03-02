@@ -1,0 +1,14 @@
+[package]
+name = "fltk7guis"
+version = "0.1.0"
+authors = ["MoAlyousef <may642_2000@hotmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dev-dependencies]
+fltk = { version = "0.15", features = ["fltk-bundled"] }
+chrono = "0.4"
+regex = "1.4"
+lazy_static = "1.4"
+timer = "0.2"
