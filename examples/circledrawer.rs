@@ -161,12 +161,11 @@ fn main() {
     undo.set_callback(move || {
         let state = STATE.lock().unwrap();
         let children = frame.children();
-        let child = frame.child(children - 1).unwrap();
-        let mut child = unsafe { frame::Frame::from_widget_ptr(child.as_widget_ptr()) };
+        let mut child = frame.child(children - 1).unwrap();
         match state.0.as_ref() {
-            Some(DrawEvent::DrawCircle) => {
-                frame.remove(&child);
-            }
+            Some(DrawEvent::DrawCircle) => unsafe {
+                frame::Frame::delete(frame::Frame::from_widget_ptr(child.as_widget_ptr()))
+            },
             Some(DrawEvent::ResizeCircle(val)) => {
                 child.set_size(*val, *val);
             }
