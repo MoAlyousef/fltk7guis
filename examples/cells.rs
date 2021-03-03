@@ -96,7 +96,7 @@ fn main() {
                 // Press enter to store the data into the cell
                 let c = cell.borrow();
                 let val = inp.value();
-                if val.contains("Sum of") {
+                if val.contains(&"Sum of".to_ascii_lowercase()) {
                     let val: Vec<&str> = val.split_whitespace().collect();
                     let val = val[2];
                     let idx = val.find(':').unwrap();
