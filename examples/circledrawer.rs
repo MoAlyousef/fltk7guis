@@ -59,7 +59,7 @@ impl Circle {
                             slider.set_callback2(move |s| {
                                 let val = s.value() as i32;
                                 f_c.resize(f_c.x(), f_c.y(), val, val);
-                                f_c.top_window().unwrap().redraw();
+                                app::redraw();
                             });
                             win.end();
                             win.make_modal(true);
@@ -197,7 +197,7 @@ fn main() {
                 Some(DrawEvent::DeleteCircle(_, _, _)) => (),
                 None => (),
             }
-            frame.top_window().unwrap().redraw();
+            app::redraw();
         }
     });
 
@@ -220,11 +220,11 @@ fn main() {
                 let mut c = Circle::new(x, y);
                 c.set_size(r, r);
                 frame.add(&*c);
-                frame.top_window().unwrap().redraw();
+                app::redraw();
             }
             None => (),
         }
-        frame.top_window().unwrap().redraw();
+        app::redraw();
     });
 
     app.run().unwrap();
