@@ -102,16 +102,20 @@ fn main() {
                     let idx = val.find(':').unwrap();
                     let (from, to) = val.split_at(idx);
                     let to = to.strip_prefix(":").unwrap();
-                    let from_col = from.chars().nth(0).unwrap() as char as i32 - 65;
+                    let from_col = from.chars().next().unwrap() as char as i32 - 65;
                     let from_row = from.to_string()[1..].parse::<i32>().unwrap() - 1;
-                    let to_col = to.chars().nth(0).unwrap() as char as i32 - 65;
+                    let to_col = to.chars().next().unwrap() as char as i32 - 65;
                     let to_row = to.to_string()[1..].parse::<i32>().unwrap() - 1;
                     let mut v: Vec<i32> = vec![];
                     for i in 0..99 {
                         for j in 0..26 {
                             if i >= from_row && i <= to_row && j >= from_col && j <= to_col {
-                                v.push(data.borrow()[i as usize][j as usize].parse::<i32>().unwrap());
-                            } 
+                                v.push(
+                                    data.borrow()[i as usize][j as usize]
+                                        .parse::<i32>()
+                                        .unwrap(),
+                                );
+                            }
                         }
                     }
                     let sum: i32 = v.iter().sum();

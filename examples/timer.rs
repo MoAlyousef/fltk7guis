@@ -1,3 +1,5 @@
+extern crate chrono;
+
 use fltk::*;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -18,7 +20,7 @@ fn main() {
         .with_label("Elapsed time:")
         .with_align(Align::Left);
     prog.set_maximum(duration);
-    let frame = frame::Frame::default()
+    let mut frame = frame::Frame::default()
         .with_size(0, 40)
         .with_label(&format!("{:02.01}s", duration))
         .with_align(Align::Left);
@@ -30,7 +32,6 @@ fn main() {
     slider.set_value(duration / 100.0);
     let duration_rc = Rc::from(RefCell::from(duration));
     slider.set_callback2({
-        let mut frame = frame.clone();
         let mut prog = prog.clone();
         let dur = duration_rc.clone();
         move |s| {
@@ -43,19 +44,23 @@ fn main() {
     });
     pack.end();
     let mut but = button::Button::new(10, 140, 380, 40, "Reset");
-    but.set_callback2(|b| println!("{}", b.y()));
     win.end();
     win.show();
 
-    let mut start = 0.0;
+    but.emit(s, 0.0);
+
+    let mut start: f64 = 0.0;
     while app.wait() {
         if let Some(msg) = r.recv() {
-            start += msg;
-            if start == *duration_rc.borrow() {
-                continue;
+            if msg == 0.0 {
+                start = 0.0;
+            } else {
+                start += msg;
+                if (start - *duration_rc.borrow()).abs() < f64::EPSILON {
+                    continue;
+                }
+                prog.set_value(start);
             }
-            let max = prog.maximum();
-            prog.set_value(start);
         }
     }
 }

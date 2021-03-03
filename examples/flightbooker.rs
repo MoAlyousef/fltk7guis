@@ -1,3 +1,6 @@
+extern crate chrono;
+extern crate regex;
+
 use chrono::DateTime;
 use chrono::Datelike;
 use chrono::Local;
@@ -73,7 +76,7 @@ fn main() {
                 let month: u32 = caps.get(2).unwrap().as_str().parse().unwrap();
                 let year: i32 = caps.get(3).unwrap().as_str().parse().unwrap();
                 let opt = NaiveDate::from_ymd_opt(year, month, day);
-                if let Some(_) = opt {
+                if opt.is_some() {
                     d.set_color(Color::White);
                     but.activate();
                     if choice.value() == 1 {
@@ -101,7 +104,7 @@ fn main() {
                 let month: u32 = caps.get(2).unwrap().as_str().parse().unwrap();
                 let year: i32 = caps.get(3).unwrap().as_str().parse().unwrap();
                 let opt = NaiveDate::from_ymd_opt(year, month, day);
-                if let Some(_) = opt {
+                if opt.is_some() {
                     let dep_caps = RE.captures(&dep_date).unwrap();
                     let dep_day: u32 = dep_caps.get(1).unwrap().as_str().parse().unwrap();
                     let dep_month: u32 = dep_caps.get(2).unwrap().as_str().parse().unwrap();

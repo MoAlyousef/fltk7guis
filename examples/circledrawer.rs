@@ -1,7 +1,5 @@
 use fltk::*;
-// use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
-// use std::rc::Rc;
 use std::sync::Mutex;
 
 #[macro_use]
@@ -13,13 +11,15 @@ pub struct Circle {
 
 pub enum DrawEvent {
     DrawCircle,
-    ResizeCircle(i32),
+    ResizeCircle(i32, u32),      // prev_size, idx
+    DeleteCircle(i32, i32, i32), // x, y, radius
 }
 
 pub struct State(Option<DrawEvent>);
 
 lazy_static! {
     static ref STATE: Mutex<State> = Mutex::new(State(None));
+    static ref CURRENT: Mutex<u32> = Mutex::new(0);
 }
 
 impl Circle {
@@ -32,7 +32,7 @@ impl Circle {
             draw::set_draw_color(Color::Black);
             draw::draw_circle((f.x() + width) as _, (f.y() + width) as _, width as _);
         });
-        let mut menu = menu::MenuItem::new(&["Adjust diameter.."]);
+        let mut menu = menu::MenuItem::new(&["Adjust diameter\t ..."]);
         frm.handle2(move |f, ev| match ev {
             Event::Push => {
                 if app::event_mouse_button() == Mouse::Right {
@@ -52,7 +52,9 @@ impl Circle {
                             slider.set_maximum(100.);
                             slider.set_value(f.width() as f64);
                             let mut state = STATE.lock().unwrap();
-                            *state = State(Some(DrawEvent::ResizeCircle(f.width())));
+                            f.do_callback();
+                            let curr = CURRENT.lock().unwrap();
+                            *state = State(Some(DrawEvent::ResizeCircle(f.width(), *curr)));
                             let mut f_c = f.clone();
                             slider.set_callback2(move |s| {
                                 let val = s.value() as i32;
@@ -121,8 +123,13 @@ fn main() {
                 if x < f.x() || y < f.y() {
                     return false;
                 }
-                let c = Circle::new(x, y);
+                let mut c = Circle::new(x, y);
                 f.add(&*c);
+                let idx = f.find(&*c);
+                c.set_callback(move || {
+                    let mut curr = CURRENT.lock().unwrap();
+                    *curr = idx;
+                });
                 let mut state = STATE.lock().unwrap();
                 *state = State(Some(DrawEvent::DrawCircle));
                 f.redraw();
@@ -158,23 +165,67 @@ fn main() {
         _ => false,
     });
 
-    undo.set_callback(move || {
-        let state = STATE.lock().unwrap();
-        let children = frame.children();
-        let mut child = frame.child(children - 1).unwrap();
-        match state.0.as_ref() {
-            Some(DrawEvent::DrawCircle) => unsafe {
-                frame::Frame::delete(frame::Frame::from_widget_ptr(child.as_widget_ptr()))
-            },
-            Some(DrawEvent::ResizeCircle(val)) => {
-                child.set_size(*val, *val);
+    undo.set_callback({
+        let frame = frame.clone();
+        move || {
+            let children = frame.children();
+            if children == 0 {
+                return;
+            }
+            let mut state = STATE.lock().unwrap();
+            match state.0 {
+                Some(DrawEvent::DrawCircle) => {
+                    if let Some(child) = frame.child(children - 1) {
+                        *state = State(Some(DrawEvent::DeleteCircle(
+                            child.x(),
+                            child.y(),
+                            child.width(),
+                        )));
+                        unsafe {
+                            frame::Frame::delete(frame::Frame::from_widget_ptr(
+                                child.as_widget_ptr(),
+                            ))
+                        };
+                    }
+                }
+                Some(DrawEvent::ResizeCircle(val, idx)) => {
+                    if let Some(mut child) = frame.child(idx) {
+                        *state = State(Some(DrawEvent::ResizeCircle(child.width(), idx)));
+                        child.set_size(val, val);
+                    }
+                }
+                Some(DrawEvent::DeleteCircle(_, _, _)) => (),
+                None => (),
+            }
+            frame.top_window().unwrap().redraw();
+        }
+    });
+
+    redo.set_callback(move || {
+        let mut state = STATE.lock().unwrap();
+        match state.0 {
+            Some(DrawEvent::DrawCircle) => (),
+            Some(DrawEvent::ResizeCircle(val, idx)) => {
+                let children = frame.children();
+                if children == 0 {
+                    return;
+                }
+                if let Some(mut child) = frame.child(idx) {
+                    *state = State(Some(DrawEvent::ResizeCircle(child.width(), idx)));
+                    child.set_size(val, val);
+                }
+            }
+            Some(DrawEvent::DeleteCircle(x, y, r)) => {
+                *state = State(Some(DrawEvent::DrawCircle));
+                let mut c = Circle::new(x, y);
+                c.set_size(r, r);
+                frame.add(&*c);
+                frame.top_window().unwrap().redraw();
             }
             None => (),
         }
         frame.top_window().unwrap().redraw();
     });
-
-    redo.set_callback(move || {});
 
     app.run().unwrap();
 }

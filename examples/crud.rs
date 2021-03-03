@@ -65,6 +65,8 @@ impl UserInterface {
     }
 }
 
+extern crate regex;
+
 use fltk::*;
 use regex::Regex;
 use std::cell::RefCell;
@@ -165,8 +167,6 @@ fn main() {
     update.set_callback({
         let mut br = br.clone();
         let mut list = list_rc.clone();
-        let name = name.clone();
-        let surname = surname.clone();
         move || {
             let idx = br.value() - 1;
             list.borrow_mut()[idx as usize] = (name.value(), surname.value());
@@ -177,16 +177,12 @@ fn main() {
         }
     });
 
-    delete.set_callback({
-        let mut br = br.clone();
-        let mut list = list_rc.clone();
-        move || {
-            let idx = br.value() - 1;
-            list.borrow_mut().remove(idx as usize);
-            br.clear();
-            for elem in &*list.borrow() {
-                br.add(&format!("{}, {}", elem.1, elem.0));
-            }
+    delete.set_callback(move || {
+        let idx = br.value() - 1;
+        list_rc.borrow_mut().remove(idx as usize);
+        br.clear();
+        for elem in &*list_rc.borrow() {
+            br.add(&format!("{}, {}", elem.1, elem.0));
         }
     });
 
