@@ -1,6 +1,6 @@
 # fltk7guis
 
-Demo repo with an implementation of the 7gui tasks described in:
+Demo repo with a crude implementation of the 7gui tasks described in:
 https://eugenkiss.github.io/7guis/tasks
 
 Run the examples using:
